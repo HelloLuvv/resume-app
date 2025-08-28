@@ -2,6 +2,9 @@ import { Component } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
+import QRCode from 'qrcode';
 
 interface Experience {
   title: string;
@@ -19,6 +22,13 @@ interface Education {
   isEditing?: boolean;
 }
 
+interface SocialLink {
+  platform: string;
+  url: string;
+  icon: string;
+  isEditing?: boolean;
+}
+
 @Component({
   selector: 'app-root',
   standalone: true,
@@ -29,6 +39,9 @@ interface Education {
 export class AppComponent {
   title = 'Resume';
   isEditingContact = false;
+  isEditingSocial = false;
+  qrCodeDataUrl: string = '';
+  showQRCode = false;
   
   contact = {
     name: 'Your Name',
@@ -37,6 +50,24 @@ export class AppComponent {
     phone: '(123) 456-7890',
     location: 'City, Country'
   };
+
+  socialLinks: SocialLink[] = [
+    {
+      platform: 'LinkedIn',
+      url: 'https://linkedin.com/in/yourprofile',
+      icon: 'fa-linkedin'
+    },
+    {
+      platform: 'GitHub',
+      url: 'https://github.com/yourusername',
+      icon: 'fa-github'
+    },
+    {
+      platform: 'Twitter',
+      url: 'https://twitter.com/yourhandle',
+      icon: 'fa-twitter'
+    }
+  ];
 
   skills: string[] = ['Angular', 'TypeScript', 'HTML', 'CSS', 'JavaScript', 'Git'];
   newSkill = '';
@@ -65,8 +96,50 @@ export class AppComponent {
     }
   ];
 
+  constructor() {
+    this.generateQRCode();
+  }
+
+  async generateQRCode() {
+    try {
+      const qrData = {
+        name: this.contact.name,
+        title: this.contact.title,
+        email: this.contact.email,
+        phone: this.contact.phone,
+        location: this.contact.location,
+        social: this.socialLinks.map(link => ({
+          platform: link.platform,
+          url: link.url
+        }))
+      };
+      
+      this.qrCodeDataUrl = await QRCode.toDataURL(JSON.stringify(qrData), {
+        width: 200,
+        margin: 2,
+        color: {
+          dark: '#000000',
+          light: '#ffffff'
+        }
+      });
+    } catch (err) {
+      console.error('Error generating QR code:', err);
+    }
+  }
+
   toggleContactEdit() {
     this.isEditingContact = !this.isEditingContact;
+  }
+
+  toggleSocialEdit() {
+    this.isEditingSocial = !this.isEditingSocial;
+    if (!this.isEditingSocial) {
+      this.generateQRCode();
+    }
+  }
+
+  toggleQRCode() {
+    this.showQRCode = !this.showQRCode;
   }
 
   addSkill() {
@@ -110,5 +183,44 @@ export class AppComponent {
 
   deleteEducation(index: number) {
     this.education.splice(index, 1);
+  }
+
+  addSocialLink() {
+    this.socialLinks.push({
+      platform: 'New Platform',
+      url: 'https://',
+      icon: 'fa-link',
+      isEditing: true
+    });
+  }
+
+  deleteSocialLink(index: number) {
+    this.socialLinks.splice(index, 1);
+    this.generateQRCode();
+  }
+
+  async downloadPDF() {
+    // Get the resume container element
+    const element = document.querySelector('.resume-container') as HTMLElement;
+    if (!element) return;
+
+    // Create canvas from the element
+    const canvas = await html2canvas(element, {
+      scale: 2, // Higher scale for better quality
+      useCORS: true,
+      logging: false
+    });
+
+    // Calculate dimensions to maintain aspect ratio
+    const imgWidth = 210; // A4 width in mm
+    const pageHeight = 297; // A4 height in mm
+    const imgHeight = (canvas.height * imgWidth) / canvas.width;
+    
+    // Create PDF
+    const pdf = new jsPDF('p', 'mm', 'a4');
+    pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0, imgWidth, imgHeight);
+
+    // Download the PDF
+    pdf.save('resume.pdf');
   }
 }

@@ -154,5 +154,69 @@
       }
     </div>
   </section>
+
+  <section class="social-links">
+    <div class="section-header">
+      <h2><i class="fas fa-share-alt"></i> Social Links</h2>
+      <button (click)="addSocialLink()" class="add-btn" *ngIf="isEditingSocial">
+        <i class="fas fa-plus"></i> Add Link
+      </button>
+      <button (click)="toggleSocialEdit()" class="edit-btn">
+        <i class="fas" [class.fa-edit]="!isEditingSocial" [class.fa-save]="isEditingSocial"></i>
+        {{isEditingSocial ? 'Save' : 'Edit'}}
+      </button>
+    </div>
+
+    <div class="social-links-grid">
+      @for (link of socialLinks; track link; let i = $index) {
+        @if (!isEditingSocial) {
+          <a [href]="link.url" target="_blank" class="social-link">
+            <i class="fab" [class]="link.icon"></i>
+            <span>{{link.platform}}</span>
+          </a>
+        } @else {
+          <div class="social-link-edit">
+            <div class="input-group">
+              <i class="fas fa-tag"></i>
+              <input [(ngModel)]="link.platform" placeholder="Platform Name">
+            </div>
+            <div class="input-group">
+              <i class="fas fa-link"></i>
+              <input [(ngModel)]="link.url" placeholder="URL">
+            </div>
+            <div class="input-group">
+              <i class="fas fa-icons"></i>
+              <input [(ngModel)]="link.icon" placeholder="Font Awesome Icon Class">
+            </div>
+            <button (click)="deleteSocialLink(i)" class="delete-btn">
+              <i class="fas fa-trash-alt"></i>
+            </button>
+          </div>
+        }
+      }
+    </div>
+  </section>
+
+  <section class="qr-code">
+    <div class="section-header">
+      <h2><i class="fas fa-qrcode"></i> Quick Connect</h2>
+      <button (click)="toggleQRCode()" class="toggle-btn">
+        <i class="fas" [class.fa-eye]="!showQRCode" [class.fa-eye-slash]="showQRCode"></i>
+        {{showQRCode ? 'Hide QR Code' : 'Show QR Code'}}
+      </button>
+    </div>
+    @if (showQRCode) {
+      <div class="qr-code-container">
+        <img [src]="qrCodeDataUrl" alt="Resume QR Code">
+        <p class="qr-code-hint">Scan to get my contact information</p>
+      </div>
+    }
+  </section>
+
+  <div class="download-button">
+    <button (click)="downloadPDF()" class="download-pdf-btn">
+      <i class="fas fa-file-pdf"></i> Download PDF
+    </button>
+  </div>
 </div>
 <router-outlet />
